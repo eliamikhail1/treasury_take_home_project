@@ -5,6 +5,9 @@ import { useState } from "react";
 
 type UploadMode = "single" | "batch";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
 export default function UploadPage() {
   const router = useRouter();
 
@@ -40,15 +43,18 @@ export default function UploadPage() {
     formData.append("importOrigin", getValue("importOrigin"));
     formData.append("healthWarning", getValue("healthWarning"));
 
-    const response = await fetch("http://localhost:8000/single-label-check", {
+    const response = await fetch(`${API_BASE_URL}/single-label-check`, {
       method: "POST",
       body: formData,
     });
 
     const data = await response.json();
 
-    localStorage.setItem("latestValidationReport", JSON.stringify(data));
+    if (!response.ok) {
+      throw new Error(data?.error ?? "Single-label upload failed.");
+    }
 
+    localStorage.setItem("latestValidationReport", JSON.stringify(data));
     router.push("/results");
   }
 
@@ -66,15 +72,18 @@ export default function UploadPage() {
 
     formData.append("spreadsheet", spreadsheet);
 
-    const response = await fetch("http://localhost:8000/batch-label-check", {
+    const response = await fetch(`${API_BASE_URL}/batch-label-check`, {
       method: "POST",
       body: formData,
     });
 
     const data = await response.json();
 
-    localStorage.setItem("latestValidationReport", JSON.stringify(data));
+    if (!response.ok) {
+      throw new Error(data?.error ?? "Batch upload failed.");
+    }
 
+    localStorage.setItem("latestValidationReport", JSON.stringify(data));
     router.push("/results");
   }
 
@@ -88,8 +97,13 @@ export default function UploadPage() {
       } else {
         await submitBatch();
       }
-    } catch {
-      alert("Upload failed. Make sure the backend is running on port 8000.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Upload failed. Make sure the backend is running.";
+
+      alert(message);
     } finally {
       setLoading(false);
     }
@@ -180,7 +194,7 @@ export default function UploadPage() {
               <label className="mb-1 block font-medium">Spreadsheet</label>
               <input
                 type="file"
-                accept=".csv,.xlsx"
+                accept=".csv,.xlsx,.xls"
                 onChange={(event) =>
                   setSpreadsheet(event.target.files?.[0] ?? null)
                 }
