@@ -1,18 +1,10 @@
-import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+import pytesseract
+from PIL import Image
 
-load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-if not GEMINI_API_KEY:
-    raise RuntimeError("Missing GEMINI_API_KEY in backend/.env")
-
-client = genai.Client(api_key=GEMINI_API_KEY)
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png"}
 
 
 def extract_text_from_image(image_path: str | Path) -> str:
@@ -21,36 +13,13 @@ def extract_text_from_image(image_path: str | Path) -> str:
     if not path.exists():
         raise FileNotFoundError(f"Image not found: {path}")
 
-    image_bytes = path.read_bytes()
+    if path.suffix.lower() not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValueError("Only .jpg, .jpeg, and .png images are supported.")
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=[
-            types.Part.from_bytes(
-                data=image_bytes,
-                mime_type=_get_mime_type(path),
-            ),
-            """
-            Extract all visible text from this alcohol label image.
+    try:
+        image = Image.open(path)
+        text = pytesseract.image_to_string(image)
+        return text or ""
 
-            Return only the raw text found on the label.
-            Do not summarize.
-            Do not explain.
-            Preserve line breaks as much as possible.
-            """,
-        ],
-    )
-
-    return response.text or ""
-
-
-def _get_mime_type(path: Path) -> str:
-    suffix = path.suffix.lower()
-
-    if suffix in [".jpg", ".jpeg"]:
-        return "image/jpeg"
-
-    if suffix == ".png":
-        return "image/png"
-
-    raise ValueError("Only .jpg, .jpeg, and .png images are supported.")
+    except Exception as error:
+        raise RuntimeError(f"Local OCR failed: {str(error)}")

@@ -1,0 +1,4 @@
+labelName,brandName,class,alcoholContent,netContents,address,importOrigin,healthWarning
+test_vodka_pass,Example Vodka,Vodka,40% ABV,750 mL,"Example Bottling Co., Denver, CO",,"GOVERNMENT WARNING: According to the Surgeon General, women should not drink alcoholic beverages during pregnancy."
+test_wine_bad_warning,Example Red Wine,Red Wine,13.5% ABV,750 mL,"Example Winery, Napa, CA",,"Government Warning: According to the Surgeon General, women should not drink alcoholic beverages during pregnancy."
+test_beer_wrong_brand,Expected Beer Co.,Beer,5% ABV,12 FL OZ,"Expected Brewery, Austin, TX",,"GOVERNMENT WARNING: According to the Surgeon General, women should not drink alcoholic beverages during pregnancy."
